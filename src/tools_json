@@ -69,9 +69,6 @@
         "project_name": "string"
       }
     },
-
-    // ------------------- NEW USE CASES -------------------
-
     {
       "name": "add_cluster",
       "description": "Add a new Kubernetes cluster (stage, dev, production) to ArgoCD",
