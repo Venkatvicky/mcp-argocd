@@ -1,0 +1,16 @@
+replicaCount: 1
+
+image:
+  repository: your-dockerhub-username/argocd-mcp
+  tag: "latest"
+  pullPolicy: IfNotPresent
+
+service:
+  type: ClusterIP
+  port: 8000
+
+env:
+  ARGOCD_BASE_URL: "http://your-argocd-url"
+  ARGOCD_API_TOKEN: "your-argocd-token"
+
+resources: {}
