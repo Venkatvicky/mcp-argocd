@@ -1,33 +1,38 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "argocd-mcp.fullname" . }}
+  # avoid helpers; use Release name for stability
+  name: {{ .Release.Name }}-argocd-mcp
   labels:
-    app: {{ include "argocd-mcp.name" . }}
+    app: {{ default .Chart.Name "argocd-mcp" }}
 spec:
-  replicas: {{ .Values.replicaCount }}
+  replicas: {{ default 1 .Values.replicaCount }}
   selector:
     matchLabels:
-      app: {{ include "argocd-mcp.name" . }}
+      app: {{ default .Chart.Name "argocd-mcp" }}
   template:
     metadata:
       labels:
-        app: {{ include "argocd-mcp.name" . }}
+        app: {{ default .Chart.Name "argocd-mcp" }}
     spec:
-      serviceAccountName: {{ include "argocd-mcp.serviceAccountName" . }}
+      # use provided SA or default
+      serviceAccountName: {{ default "default" .Values.serviceAccountName }}
       containers:
         - name: argocd-mcp
-          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
-          imagePullPolicy: "{{ .Values.image.pullPolicy }}"
+          image: "{{ default "python" .Values.image.repository }}:{{ default "3.11-slim" .Values.image.tag }}"
+          imagePullPolicy: "{{ default "IfNotPresent" .Values.image.pullPolicy }}"
           ports:
             - containerPort: 8000
+              name: http
           envFrom:
             - secretRef:
-                name: {{ include "argocd-mcp.fullname" . }}-secret
+                # must match your Secret metadata.name
+                name: {{ .Release.Name }}-argocd-mcp-secret
           volumeMounts:
             - name: config
               mountPath: /app/config
       volumes:
         - name: config
           configMap:
-            name: {{ include "argocd-mcp.fullname" . }}-config
+            # must match your ConfigMap metadata.name
+            name: {{ .Release.Name }}-argocd-mcp-config
