@@ -1,19 +1,12 @@
 {{- define "argocd-mcp.name" -}}
-argocd-mcp
-{{- end }}
+{{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" -}}
+{{- end -}}
 
 {{- define "argocd-mcp.fullname" -}}
-{{ include "argocd-mcp.name" . }}
-{{- end }}
+{{- $name := default .Chart.Name .Values.nameOverride -}}
+{{- printf "%s-%s" .Release.Name $name | trunc 63 | trimSuffix "-" -}}
+{{- end -}}
 
-{{- define "argocd-mcp.serviceAccountName" -}}
-{{- if .Values.serviceAccount.create }}
-{{- if .Values.serviceAccount.name }}
-{{ .Values.serviceAccount.name }}
-{{- else }}
-{{ include "argocd-mcp.fullname" . }}
-{{- end }}
-{{- else }}
-default
-{{- end }}
-{{- end }}
+{{- define "argocd-mcp.chart" -}}
+{{- printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" -}}
+{{- end -}}
