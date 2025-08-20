@@ -30,5 +30,11 @@ mounts:
   toolsPath: /app/tools.json
 
 service:
-  type: ClusterIP       # Use LoadBalancer if you want external access
+  type: ClusterIP
   port: 8000
+
+toolsJson:
+  enabled: true
+  name: tools
+  key: tools.json
+  path: /app/tools.json
