@@ -1,11 +1,15 @@
 {{- define "argocd-mcp.name" -}}
-{{ .Chart.Name }}
+argocd-mcp
 {{- end }}
 
 {{- define "argocd-mcp.fullname" -}}
-{{ .Release.Name }}-{{ .Chart.Name }}
+{{ include "argocd-mcp.name" . }}
 {{- end }}
 
-{{- define "argocd-mcp.chart" -}}
-{{ .Chart.Name }}-{{ .Chart.Version }}
+{{- define "argocd-mcp.serviceAccountName" -}}
+{{- if .Values.serviceAccount.name }}
+{{ .Values.serviceAccount.name }}
+{{- else }}
+{{ include "argocd-mcp.fullname" . }}
+{{- end }}
 {{- end }}
