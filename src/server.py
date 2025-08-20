@@ -1,5 +1,5 @@
 from fastapi import FastAPI, Request
-from fastapi.responses import StreamingResponse
+from fastapi.responses import StreamingResponse, JSONResponse
 from pydantic import BaseModel
 from typing import Optional, Dict, Any
 import os
@@ -9,30 +9,35 @@ import urllib3
 import asyncio
 from dotenv import load_dotenv
 from mcp.server.fastmcp import FastMCP
+from pathlib import Path
 
 # ------------------------------
 # Load environment variables
 # ------------------------------
-load_dotenv()
+BASE_DIR = Path(__file__).resolve().parent
+ENV_PATH = BASE_DIR / ".env"
+if ENV_PATH.exists():
+    load_dotenv(ENV_PATH)
+
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 ARGOCD_BASE_URL = os.getenv("ARGOCD_BASE_URL")
 ARGOCD_API_TOKEN = os.getenv("ARGOCD_API_TOKEN")
 
 if not ARGOCD_BASE_URL or not ARGOCD_API_TOKEN:
-    raise ValueError("❌ Missing ARGOCD_BASE_URL or ARGOCD_API_TOKEN in .env file")
+    raise ValueError("❌ Missing ARGOCD_BASE_URL or ARGOCD_API_TOKEN in environment/.env")
 
 # ------------------------------
 # FastAPI App + MCP instance
 # ------------------------------
-app = FastAPI()
+app = FastAPI(title="ArgoCD MCP Server")
 mcp = FastMCP("ArgoCD MCP Server")
 
 # ------------------------------
 # ArgoCD Client
 # ------------------------------
 class ArgoCDClient:
-    def _init_(self, base_url: str, token: str):
+    def __init__(self, base_url: str, token: str):
         self.base_url = base_url.rstrip("/")
         self.headers = {
             "Authorization": f"Bearer {token}",
@@ -97,7 +102,7 @@ def mcp_get_application_resource_tree(application_name: str):
 @mcp.tool()
 def add_cluster(cluster_name: str, cluster_endpoint: str, auth_token: str):
     """Add a new Kubernetes cluster (stage/dev/prod)"""
-    # Stub implementation, replace with actual argocd cluster add
+    # Stub (replace with ArgoCD cluster add via CLI/API if needed)
     return {
         "status": "success",
         "message": f"Cluster {cluster_name} added with endpoint {cluster_endpoint}"
@@ -143,12 +148,13 @@ def configure_rbac(username: str, role: str, project: Optional[str] = None):
 async def jsonrpc_handler(request: Request):
     body = await request.json()
     response = await mcp.handle_jsonrpc(body)
-    return response
+    # Ensure proper JSONResponse (FastAPI can return dicts, but we'll be explicit)
+    return JSONResponse(response)
 
 # ------------------------------
-# SSE Endpoint
+# SSE Endpoint (reads tools.json from same directory)
 # ------------------------------
-TOOLS_FILE_PATH = os.path.join(os.path.dirname(_file_), "tools.json")
+TOOLS_FILE_PATH = BASE_DIR / "tools.json"
 
 async def event_generator():
     while True:
@@ -177,8 +183,15 @@ async def sse_endpoint():
     return StreamingResponse(event_generator(), media_type="text/event-stream")
 
 # ------------------------------
+# Health checks
+# ------------------------------
+@app.get("/healthz")
+def healthz():
+    return {"status": "ok"}
+
+# ------------------------------
 # Run server
 # ------------------------------
-if _name_ == "_main_":
+if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run("server:app", host="0.0.0.0", port=8000)
