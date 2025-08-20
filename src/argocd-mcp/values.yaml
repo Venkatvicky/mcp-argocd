@@ -1,10 +1,5 @@
 replicaCount: 1
 
-image:
-  repository: your-dockerhub-username/argocd-mcp
-  tag: "latest"
-  pullPolicy: IfNotPresent
-
 service:
   type: ClusterIP
   port: 8000
