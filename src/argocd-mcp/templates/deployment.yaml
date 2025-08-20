@@ -2,6 +2,8 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{ include "argocd-mcp.fullname" . }}
+  labels:
+    app: {{ include "argocd-mcp.name" . }}
 spec:
   replicas: {{ .Values.replicaCount }}
   selector:
@@ -12,12 +14,14 @@ spec:
       labels:
         app: {{ include "argocd-mcp.name" . }}
     spec:
+      serviceAccountName: {{ include "argocd-mcp.serviceAccountName" . }}
       containers:
         - name: argocd-mcp
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
             - containerPort: 8000
+              name: http
           envFrom:
             - secretRef:
                 name: {{ include "argocd-mcp.fullname" . }}-secret
