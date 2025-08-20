@@ -1,11 +1,10 @@
 replicaCount: 1
 
+image:
+  repository: python
+  tag: "3.11-slim"
+  pullPolicy: IfNotPresent
+
 service:
   type: ClusterIP
   port: 8000
-
-env:
-  ARGOCD_BASE_URL: "http://your-argocd-url"
-  ARGOCD_API_TOKEN: "your-argocd-token"
-
-resources: {}
