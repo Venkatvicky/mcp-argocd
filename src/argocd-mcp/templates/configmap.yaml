@@ -3,7 +3,8 @@ kind: ConfigMap
 metadata:
   name: {{ include "argocd-mcp.fullname" . }}-config
 data:
-  tools_event.json: |-
-{{ .Files.Get "src/tools_event.json" | indent 4 }}
-  trust-policy.json: |-
-{{ .Files.Get "src/trust-policy.json" | indent 4 }}
+data:
+  server.py: |
+{{ .Files.Get "files/server.py" | indent 4 }}
+  tools_event.json: |
+{{ .Files.Get "files/tools_event.json" | indent 4 }}
