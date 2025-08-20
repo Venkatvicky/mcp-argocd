@@ -18,10 +18,9 @@ spec:
       containers:
         - name: argocd-mcp
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
-          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          imagePullPolicy: "{{ .Values.image.pullPolicy }}"
           ports:
             - containerPort: 8000
-              name: http
           envFrom:
             - secretRef:
                 name: {{ include "argocd-mcp.fullname" . }}-secret
