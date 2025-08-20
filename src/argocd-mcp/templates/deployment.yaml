@@ -30,4 +30,4 @@ spec:
       volumes:
         - name: config
           configMap:
-            name: {{ include "argocd-mcp.fullname" .
+            name: {{ include "argocd-mcp.fullname" . }}-config
