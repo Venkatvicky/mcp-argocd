@@ -1,18 +1,45 @@
 replicaCount: 1
 
-image:
-  repository: python
-  tag: "3.11-slim"
-  pullPolicy: IfNotPresent
-
 service:
   type: ClusterIP
   port: 8000
 
+resources: {}
+nodeSelector: {}
+tolerations: []
+affinity: {}
+
 env:
   ARGOCD_BASE_URL: "http://a96ce0a1205244fe18c697f962963377-131192832.us-east-1.elb.amazonaws.com"
-  ARGOCD_API_TOKEN: "yJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJhcmdvY2QiLCJzdWIiOiJhZG1pbjphcGlLZXkiLCJuYmYiOjE3NTUwNjM2NTAsImlhdCI6MTc1NTA2MzY1MCwianRpIjoiNzE4M2Q5YjEtMzk3Mi00Y2JlLTgxOWEtMjAxMGMwODk1MGVjIn0.fNFr_g1odoWICEaHAz_Z859Oo3hmzCJKfB1pmXTTm1M"   # override via --set
+  # ⚠️ Replace with your real token or set via --set env.ARGOCD_API_TOKEN=...
+  ARGOCD_API_TOKEN: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJhcmdvY2QiLCJzdWIiOiJhZG1pbjphcGlLZXkiLCJuYmYiOjE3NTUwNjM2NTAsImlhdCI6MTc1NTA2MzY1MCwianRpIjoiNzE4M2Q5YjEtMzk3Mi00Y2JlLTgxOWEtMjAxMGMwODk1MGVjIn0.fNFr_g1odoWICEaHAz_Z859Oo3hmzCJKfB1pmXTTm1M"
 
-serviceAccount:
-  create: true
-  name: ""   # leave empty → Helm will auto-use fullname
+livenessProbe:
+  path: /healthz
+  initialDelaySeconds: 10
+  periodSeconds: 10
+
+readinessProbe:
+  path: /healthz
+  initialDelaySeconds: 5
+  periodSeconds: 5
+
+# The tools.json content to mount into the container
+toolsJson:
+  enabled: true
+  # When enabled, the templates/configmap.yaml will create ConfigMap with this content
+  content: |
+    {{- /* This string is replaced at render time with tools.json content. 
+          You can also override with --set-file toolsJson.content=src/tools.json */ -}}
+    {{ .Files.Get "files/tools.json" | nindent 0 }}
+
+# Extra volumeMount path for tools.json
+mounts:
+  toolsPath: "/app/src/tools.json"
+
+# Container command/args (assumes your image has code at /app/src)
+command: ["uvicorn"]
+args: ["server:app", "--host", "0.0.0.0", "--port", "8000"]
+
+# Optional extra env (array of name/value pairs)
+extraEnv: []
