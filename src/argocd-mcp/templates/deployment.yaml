@@ -1,36 +1,63 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ .Release.Name }}-argocd-mcp
+  name: {{ include "argocd-mcp.fullname" . }}
   labels:
-    app: {{ default .Chart.Name "argocd-mcp" }}
+    app.kubernetes.io/name: {{ include "argocd-mcp.name" . }}
+    helm.sh/chart: {{ include "argocd-mcp.chart" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
 spec:
-  replicas: {{ default 1 .Values.replicaCount }}
+  replicas: {{ .Values.replicaCount }}
   selector:
     matchLabels:
-      app: {{ default .Chart.Name "argocd-mcp" }}
+      app.kubernetes.io/name: {{ include "argocd-mcp.name" . }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
   template:
     metadata:
       labels:
-        app: {{ default .Chart.Name "argocd-mcp" }}
+        app.kubernetes.io/name: {{ include "argocd-mcp.name" . }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
     spec:
-      serviceAccountName: {{ default "default" .Values.serviceAccountName }}
       containers:
         - name: argocd-mcp
-          image: "{{ default "python" .Values.image.repository }}:{{ default "3.11-slim" .Values.image.tag }}"
-          imagePullPolicy: "{{ default "IfNotPresent" .Values.image.pullPolicy }}"
-          command: ["uvicorn"]
-          args: ["server:app", "--reload", "--host", "0.0.0.0", "--port", "8000"]
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command: {{- toJson .Values.command }}
+          args: {{- toJson .Values.args }}
           ports:
             - containerPort: 8000
-              name: http
-          envFrom:
-            - secretRef:
-                name: {{ .Release.Name }}-argocd-mcp-secret
+          env:
+            - name: ARGOCD_BASE_URL
+              value: "{{ .Values.env.ARGOCD_BASE_URL }}"
+            - name: ARGOCD_API_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  # You can create this secret externally OR pass via plain value below
+                  name: {{ include "argocd-mcp.fullname" . }}-env
+                  key: ARGOCD_API_TOKEN
+          {{- with .Values.extraEnv }}
+          {{- toYaml . | nindent 12 }}
+          {{- end }}
+          livenessProbe:
+            httpGet:
+              path: {{ .Values.livenessProbe.path }}
+              port: 8000
+            initialDelaySeconds: {{ .Values.livenessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.livenessProbe.periodSeconds }}
+          readinessProbe:
+            httpGet:
+              path: {{ .Values.readinessProbe.path }}
+              port: 8000
+            initialDelaySeconds: {{ .Values.readinessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.readinessProbe.periodSeconds }}
           volumeMounts:
-            - name: config
-              mountPath: /app/config
+            - name: tools
+              mountPath: {{ .Values.mounts.toolsPath }}
+              subPath: tools.json
       volumes:
-        - name: config
+        - name: tools
           configMap:
-            name: {{ .Release.Name }}-argocd-mcp-config
+            name: {{ include "argocd-mcp.fullname" . }}-tools
+            items:
+              - key: tools.json
+                path: tools.json
