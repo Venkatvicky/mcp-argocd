@@ -1,10 +1,17 @@
+{{- if .Values.toolsJson.enabled }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ include "argocd-mcp.fullname" . }}-config
+  name: {{ include "argocd-mcp.fullname" . }}-tools
+  labels:
+    app.kubernetes.io/name: {{ include "argocd-mcp.name" . }}
+    helm.sh/chart: {{ include "argocd-mcp.chart" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
 data:
-data:
-  server.py: |
-{{ .Files.Get "files/server.py" | indent 4 }}
-  tools_event.json: |
-{{ .Files.Get "files/tools_event.json" | indent 4 }}
+  tools.json: |
+{{- if .Files.Get "files/tools.json" }}
+{{ .Files.Get "files/tools.json" | indent 4 }}
+{{- else }}
+{{ .Values.toolsJson.content | indent 4 }}
+{{- end }}
+{{- end }}
