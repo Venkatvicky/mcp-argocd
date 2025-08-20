@@ -28,3 +28,7 @@ readinessProbe:
 
 mounts:
   toolsPath: /app/tools.json
+
+service:
+  type: ClusterIP       # Use LoadBalancer if you want external access
+  port: 8000
