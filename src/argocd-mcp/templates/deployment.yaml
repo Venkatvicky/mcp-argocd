@@ -1,7 +1,6 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  # avoid helpers; use Release name for stability
   name: {{ .Release.Name }}-argocd-mcp
   labels:
     app: {{ default .Chart.Name "argocd-mcp" }}
@@ -15,18 +14,18 @@ spec:
       labels:
         app: {{ default .Chart.Name "argocd-mcp" }}
     spec:
-      # use provided SA or default
       serviceAccountName: {{ default "default" .Values.serviceAccountName }}
       containers:
         - name: argocd-mcp
           image: "{{ default "python" .Values.image.repository }}:{{ default "3.11-slim" .Values.image.tag }}"
           imagePullPolicy: "{{ default "IfNotPresent" .Values.image.pullPolicy }}"
+          command: ["uvicorn"]
+          args: ["server:app", "--reload", "--host", "0.0.0.0", "--port", "8000"]
           ports:
             - containerPort: 8000
               name: http
           envFrom:
             - secretRef:
-                # must match your Secret metadata.name
                 name: {{ .Release.Name }}-argocd-mcp-secret
           volumeMounts:
             - name: config
@@ -34,5 +33,4 @@ spec:
       volumes:
         - name: config
           configMap:
-            # must match your ConfigMap metadata.name
             name: {{ .Release.Name }}-argocd-mcp-config
