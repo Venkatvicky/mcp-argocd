@@ -3,12 +3,15 @@ kind: Service
 metadata:
   name: {{ include "argocd-mcp.fullname" . }}
   labels:
-    app: {{ include "argocd-mcp.name" . }}
+    app.kubernetes.io/name: {{ include "argocd-mcp.name" . }}
+    helm.sh/chart: {{ include "argocd-mcp.chart" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
 spec:
   type: {{ .Values.service.type }}
   selector:
-    app: {{ include "argocd-mcp.name" . }}
+    app.kubernetes.io/name: {{ include "argocd-mcp.name" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
   ports:
-    - protocol: TCP
+    - name: http
       port: {{ .Values.service.port }}
       targetPort: 8000
