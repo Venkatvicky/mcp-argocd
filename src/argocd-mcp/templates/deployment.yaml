@@ -20,8 +20,6 @@ spec:
     spec:
       containers:
         - name: argocd-mcp
-          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
-          imagePullPolicy: {{ .Values.image.pullPolicy }}
           command: {{- toJson .Values.command }}
           args: {{- toJson .Values.args }}
           ports:
@@ -32,7 +30,6 @@ spec:
             - name: ARGOCD_API_TOKEN
               valueFrom:
                 secretKeyRef:
-                  # You can create this secret externally OR pass via plain value below
                   name: {{ include "argocd-mcp.fullname" . }}-env
                   key: ARGOCD_API_TOKEN
           {{- with .Values.extraEnv }}
