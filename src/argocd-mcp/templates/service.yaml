@@ -4,14 +4,13 @@ metadata:
   name: {{ include "argocd-mcp.fullname" . }}
   labels:
     app.kubernetes.io/name: {{ include "argocd-mcp.name" . }}
-    helm.sh/chart: {{ include "argocd-mcp.chart" . }}
     app.kubernetes.io/instance: {{ .Release.Name }}
 spec:
-  type: {{ .Values.service.type }}
+  type: {{ .Values.service.type | default "ClusterIP" }}
   selector:
     app.kubernetes.io/name: {{ include "argocd-mcp.name" . }}
     app.kubernetes.io/instance: {{ .Release.Name }}
   ports:
-    - name: http
-      port: {{ .Values.service.port }}
+    - protocol: TCP
+      port: {{ .Values.service.port | default 8000 }}
       targetPort: 8000
